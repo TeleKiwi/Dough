@@ -1,10 +1,7 @@
 ﻿def main: void {
-  let x: i32 = 10
-  
-  print x
+  let x: i32 = 1
 
-  let y: i32 = 20
-
-  print 30
-  print y
+  print if x
+    then 100
+    else 0
 }

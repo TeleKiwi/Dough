@@ -27,41 +27,47 @@ internal class Builder
                 BuildLetExpressionDeclare(writer, letExpression);
 
         for (int i = 0; i < function.Expressions.Count(); i++)
-            BuildExpression(writer, function.Expressions.ElementAt(i));
+            BuildExpression(writer, function.Expressions.ElementAt(i), false);
 
         writer.WriteLine("return");
         writer.WriteLine('}');
     }
 
-    private static void BuildExpression(StringWriter writer, Expression expression)
+    private static void BuildExpression(StringWriter writer, Expression expression, bool pushResult)
     {
         switch (expression)
         {
             case PrintExpression printExpression:
-                BuildPrintExpression(writer, printExpression);
+                BuildPrintExpression(writer, printExpression, pushResult);
                 break;
             case LetExpression letExpression:
-                BuildLetExpression(writer, letExpression);
+                BuildLetExpression(writer, letExpression, pushResult);
                 break;
             case NumberExpression numberExpression:
-                BuildNumberExpression(writer, numberExpression);
+                BuildNumberExpression(writer, numberExpression, pushResult);
                 break;
             case IdentifierExpression identifierExpression:
-                BuildIdentifierExpression(writer, identifierExpression);
+                BuildIdentifierExpression(writer, identifierExpression, pushResult);
                 break;
         }
     }
 
-    private static void BuildPrintExpression(StringWriter writer, PrintExpression expression)
+    private static void BuildPrintExpression(StringWriter writer, PrintExpression expression, bool pushResult)
     {
-        BuildExpression(writer, expression.Value);
+        BuildExpression(writer, expression.Value, true);
         writer.WriteLine("print.i32");
+
+        if (pushResult)
+            writer.WriteLine("push.const.i32 0");
     }
 
-    private static void BuildLetExpression(StringWriter writer, LetExpression expression)
+    private static void BuildLetExpression(StringWriter writer, LetExpression expression, bool pushResult)
     {
-        BuildExpression(writer, expression.Value);
+        BuildExpression(writer, expression.Value, true);
         writer.WriteLine($"pop.local {expression.Definition.Identifier}");
+
+        if (pushResult)
+            writer.WriteLine($"push.local {expression.Definition.Identifier}");
     }
 
     private static void BuildLetExpressionDeclare(StringWriter writer, LetExpression expression)
@@ -69,14 +75,16 @@ internal class Builder
         writer.WriteLine($"local.{ConvertType(expression.Definition.Type)} {expression.Definition.Identifier}");
     }
 
-    private static void BuildNumberExpression(StringWriter writer, NumberExpression expression)
+    private static void BuildNumberExpression(StringWriter writer, NumberExpression expression, bool pushResult)
     {
-        writer.WriteLine($"push.const.i32 {expression.Value}");
+        if (pushResult)
+            writer.WriteLine($"push.const.i32 {expression.Value}");
     }
 
-    private static void BuildIdentifierExpression(StringWriter writer, IdentifierExpression expression)
+    private static void BuildIdentifierExpression(StringWriter writer, IdentifierExpression expression, bool pushResult)
     {
-        writer.WriteLine($"push.local {expression.Value}");
+        if (pushResult)
+            writer.WriteLine($"push.local {expression.Identifier}");
     }
 
     private static string ConvertType(string type)
