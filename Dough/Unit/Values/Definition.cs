@@ -3,9 +3,9 @@
 internal class Definition
 {
     public string Identifier { get; }
-    public string Type { get; }
+    public Type Type { get; }
 
-    public Definition(string identifier, string type)
+    public Definition(string identifier, Type type)
     {
         Identifier = identifier;
         Type = type;

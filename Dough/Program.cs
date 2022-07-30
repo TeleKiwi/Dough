@@ -7,12 +7,43 @@ using Dough.Structure;
 /// TODO: GIVE EXPRESSIONS TYPE
 /// rememeber to update builder
 ///
+/// TODO: CLI ARGUMENTS
+/// add arguments for dumping modules
+/// cil jit or interpreted, sex-mode
+/// 
+/// TODO: OPTIMIZE PUSH RESULT
+/// check if not pushing before pushing
+/// instead of after so that you dont
+/// do the classic push'n pop
+/// 
+/// TODO: FIX FUNCTION ORDERS
+/// make it so you can be able call
+/// a function before it has been
+/// defined
+/// 
+/// TODO: NEATEN EVERYTHING
+/// please fix builder
+/// also see what u can do
+/// about all the files in
+/// the values folder (omg)
+/// 
+/// TODO: FIRST CLASS FUNCTIONS
+/// make it so calls (in builder)
+/// can be made from functions
+/// assigned to variables
+/// 
+/// TODO: OPTIONAL ELSE
+/// make elses optional please bruv
+/// 
+/// TODO: ERROR MESSAGES
+/// my porgram no work :(
+///
 
 public class Program
 {
     public static void Main(string[] args)
     {
-        args = new string[] { "run", "./Tests/main.do" };
+        args = new string[] { "build", "./Tests/main.do" };
 
         if (args.Length == 0)
         {
@@ -44,55 +75,47 @@ public class Program
         Console.WriteLine("\"dough build [file.do] - Compiles a dough file to a bridge file.\"");
     }
 
-    private static void Build(string[] args)
+    private static Module? SourceToModule(string[] args)
     {
-        Console.WriteLine("Build is currently not stable and cannot be run. Please try \"dough run [file.do]\" instead.");
-        return;
-
         if (args.Length < 2)
         {
             Console.WriteLine("Please specify a file to build.");
-            return;
+            return null;
         }
 
         if (Path.GetExtension(args[1]) != ".do")
         {
             Console.WriteLine("Please specify a \".do\" file.");
-            return;
+            return null;
         }
 
         string inputPath = args[1];
         string input = File.ReadAllText(inputPath);
 
         Unit unit = Parser.ParseUnit(input);
-        string output = Builder.BuildUnit(unit);
+        Module output = Builder.BuildUnit(unit);
 
-        string outputPath = Path.ChangeExtension(args[1], ".br");
-        File.WriteAllText(outputPath, output);
+        return output;
     }
 
     private static void Run(string[] args)
     {
-        if (args.Length < 2)
-        {
-            Console.WriteLine("Please specify a file to build.");
+        if (SourceToModule(args) is not Module module)
             return;
-        }
-
-        if (Path.GetExtension(args[1]) != ".do")
-        {
-            Console.WriteLine("Please specify a \".do\" file.");
-            return;
-        }
-
-        string inputPath = args[1];
-        string input = File.ReadAllText(inputPath);
-
-        Unit unit = Parser.ParseUnit(input);
-        Module output = BridgeBuilder.BuildUnit(unit);
-
+        
         Interpreter interpreter = new Interpreter();
-        interpreter.Run(output);
+        interpreter.Run(module);
+    }
+
+    private static void Build(string[] args)
+    {
+        if (SourceToModule(args) is not Module module)
+            return;
+
+        string outputPath = Path.ChangeExtension(args[1], ".br");
+
+        using StreamWriter file = File.CreateText(outputPath);
+        Module.Dump(module, file);
     }
 
     private static void Invalid()
