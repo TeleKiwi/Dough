@@ -1,15 +1,16 @@
-﻿def main: void {
-  loop(0, 1000)
-}
+﻿def main: void() {
+  let x: i32 = 100
+  let y: i32 = 200
+  let z = x + y
 
-def loop: void(start: i32, end: i32) {
-  if start == end
-    then return
-    else 0
+  print z
 
-  if start % 2 == 0
-    then 0
-    else print start
+  let a: string = "omg!"
+  print a
 
-  loop(start + 1, end)
+  let b = "hello world"
+  print b
+
+  let c: i32 = "hey"
+  print c
 }

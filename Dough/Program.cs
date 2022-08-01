@@ -2,48 +2,44 @@
 using Dough.Builder;
 using Dough.Parser;
 using Dough.Structure;
+using Dough.Typer;
+
+// NEATEN THE DAMN BUILDER CLASS PLEASE FOR GODS SAKE (from an athiest)
 
 ///
-/// TODO: GIVE EXPRESSIONS TYPE
-/// rememeber to update builder
-///
+/// TODO: REMOVE VOID
+/// void is not functional
+/// you uncultured swine!
+/// 
 /// TODO: CLI ARGUMENTS
 /// add arguments for dumping modules
 /// cil jit or interpreted, sex-mode
-/// 
-/// TODO: OPTIMIZE PUSH RESULT
-/// check if not pushing before pushing
-/// instead of after so that you dont
-/// do the classic push'n pop
-/// 
+///
 /// TODO: FIX FUNCTION ORDERS
 /// make it so you can be able call
 /// a function before it has been
 /// defined
-/// 
-/// TODO: NEATEN EVERYTHING
-/// please fix builder
-/// also see what u can do
-/// about all the files in
-/// the values folder (omg)
-/// 
+///
 /// TODO: FIRST CLASS FUNCTIONS
 /// make it so calls (in builder)
 /// can be made from functions
 /// assigned to variables
 /// 
-/// TODO: OPTIONAL ELSE
-/// make elses optional please bruv
-/// 
 /// TODO: ERROR MESSAGES
 /// my porgram no work :(
+///
+/// TODO: REPLACE PRINT
+/// remove print as a keyword and instead
+/// use external apis native to the platform
+/// remember to update the returned value
+/// of print from 0 to the status code
 ///
 
 public class Program
 {
     public static void Main(string[] args)
     {
-        args = new string[] { "build", "./Tests/main.do" };
+        //args = new string[] { "run", "./Tests/main.do" };
 
         if (args.Length == 0)
         {
@@ -70,9 +66,9 @@ public class Program
 
     private static void Help()
     {
-        Console.WriteLine("\"dough help - Displays a list of commands.\"");
-        Console.WriteLine("\"dough run [file.do] - Runs a dough file through the bridge interpreter.\"");
-        Console.WriteLine("\"dough build [file.do] - Compiles a dough file to a bridge file.\"");
+        Console.WriteLine("\"dough help\" - Displays a list of commands.");
+        Console.WriteLine("\"dough run [file.do]\" - Runs a dough file through the bridge interpreter.");
+        Console.WriteLine("\"dough build [file.do]\" - Compiles a dough file to a bridge file.");
     }
 
     private static Module? SourceToModule(string[] args)
@@ -93,8 +89,9 @@ public class Program
         string input = File.ReadAllText(inputPath);
 
         Unit unit = Parser.ParseUnit(input);
+        Typer.TypeUnit(unit);
+        
         Module output = Builder.BuildUnit(unit);
-
         return output;
     }
 
@@ -102,7 +99,7 @@ public class Program
     {
         if (SourceToModule(args) is not Module module)
             return;
-        
+
         Interpreter interpreter = new Interpreter();
         interpreter.Run(module);
     }

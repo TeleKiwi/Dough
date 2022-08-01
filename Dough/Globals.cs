@@ -1,1 +1,1 @@
-﻿global using Type = Dough.Structure.Type;
+﻿global using Type = Dough.Typer.Type;

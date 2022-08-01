@@ -23,43 +23,53 @@ internal class Parser
             select expressions;
 
         return
-            from keyword in ParseString("def").Token()
-            from definition in ParseDefinition()
+            from keyword in ParseKeyword("def").Token()
+            from identifier in ParseIdentifier()
+            from type in (
+                from colon in Parse.Char(':').Token()
+                from type in ParseType()
+                select type
+            )
             from expressions in parseExpressions
-            select new Function(definition, expressions);
+            select new Function(identifier, type, expressions);
     }
 
 
     private static Parser<Expression> ParseExpression()
     {
         Parser<Expression> parsePrint =
-            from keyword in ParseString("print").Token()
+            from keyword in ParseKeyword("print").Token()
             from value in ParseExpression()
             select new PrintExpression(value);
 
         Parser<Expression> parseLet =
-            from keyword in ParseString("let").Token()
-            from definition in ParseDefinition()
+            from keyword in ParseKeyword("let").Token()
+            from identifier in ParseIdentifier()
+            from type in (
+                from colon in Parse.Char(':').Token()
+                from type in ParseType()
+                select type
+            ).Optional()
             from assignment in Parse.Char('=').Token()
             from value in ParseExpression()
-            select new LetExpression(definition, value);
+            select new LetExpression(identifier, type.GetOrElse(null), value);
 
         Parser<Expression> parseIfElse =
-            from keyword in ParseString("if").Token()
+            from keyword in ParseKeyword("if").Token()
             from condition in ParseExpression()
-            from thenKeyword in ParseString("then").Token()
+            from thenKeyword in ParseKeyword("then").Token()
             from onTrue in ParseExpression()
-            from elseKeyword in ParseString("else").Token()
+            from elseKeyword in ParseKeyword("else").Token()
             from onFalse in ParseExpression()
             select new IfElseExpression(condition, onTrue, onFalse);
 
         Parser<Expression> parseReturn =
-            from keyword in ParseString("return").Token()
+            from keyword in ParseKeyword("return").Token()
             from value in ParseExpression().Or(Parse.Return<Expression?>(null))
             select new ReturnExpression(value);
 
         Parser<Expression> parseCall =
-            from identifier in Parse.Identifier(Parse.Letter, Parse.LetterOrDigit).Token().Where((i) => !IsReserved(i))
+            from identifier in Parse.Identifier(Parse.Letter, Parse.LetterOrDigit).Token().Where((i) => !IsKeyword(i))
             from arguments in ParseExpression().DelimitedBy(Parse.Char(',').Token()).Optional().Contained(Parse.Char('(').Token(), Parse.Char(')').Token())
             select new CallExpression(string.Concat(identifier), arguments.GetOrElse(Enumerable.Empty<Expression>()));
 
@@ -67,9 +77,15 @@ internal class Parser
             from value in Parse.Digit.AtLeastOnce().Token()
             select new NumberExpression(string.Concat(value));
 
+        Parser<Expression> parseString =
+            from open in Parse.Char('\"').Token()
+            from value in Parse.CharExcept('\"').AtLeastOnce()
+            from close in Parse.Char('\"').Token()
+            select new StringExpression(string.Concat(value));
+
         Parser<Expression> parseIdentifier =
-            from identifier in Parse.Identifier(Parse.Letter, Parse.LetterOrDigit).Token().Where((i) => !IsReserved(i))
-            select new IdentifierExpression(string.Concat(identifier));
+            from identifier in ParseIdentifier()
+            select new IdentifierExpression(identifier);
 
         Parser<Expression> parseParenthesis =
             from open in Parse.Char('(').Token()
@@ -84,9 +100,10 @@ internal class Parser
             parseReturn.Or(
             parseCall.Or(
             parseNumber.Or(
+            parseString.Or(
             parseIdentifier.Or(
             parseParenthesis
-            )))))));
+            ))))))));
 
         Parser<Expression> multiplicativeParser = Parse.ChainOperator(
             Parse.Char('*').Or(Parse.Char('/').Or(Parse.Char('%'))).Token(),
@@ -115,33 +132,35 @@ internal class Parser
         return assignmentParser;
     }
 
-    private static Parser<Definition> ParseDefinition()
+    private static Parser<string> ParseIdentifier()
     {
-        Parser<string> parseIdentifier = Parse.Identifier(Parse.Letter, Parse.LetterOrDigit).Token().Where((i) => !IsReserved(i));
-
-        Parser<Type> parseType =
-            from type in ParseString("void").Or(ParseString("i32")).Token()
-            from parameters in (
-                from open in Parse.Char('(').Token()
-                from definitions in Parse.DelimitedBy(ParseDefinition(), Parse.Char(',').Token()).Or(Parse.Return(Enumerable.Empty<Definition>()))
-                from close in Parse.Char(')').Token()
-                select definitions
-            ).Or(Parse.Return<IEnumerable<Definition>?>(null))
-            select new Type(type, parameters);
-
-        return
-            from identifier in parseIdentifier
-            from seperator in Parse.Char(':').Token()
-            from type in parseType
-            select new Definition(identifier, type);
+        return Parse.Identifier(Parse.Letter, Parse.LetterOrDigit).Token().Where((i) => !IsKeyword(i));
     }
 
-    private static Parser<string> ParseString(string value)
+    private static Parser<Type> ParseType()
+    {
+        return
+            from type in ParseKeyword("void").Or(ParseKeyword("i32").Or(ParseKeyword("string")))
+            from parameters in (
+                from open in Parse.Char('(').Token()
+                from parameters in (
+                    from identifier in ParseIdentifier()
+                    from colon in Parse.Char(':').Token()
+                    from type in ParseType()
+                    select (identifier, type)
+                ).DelimitedBy(Parse.Char(',').Token()).Or(Parse.Return(Enumerable.Empty<(string, Type)>()))
+                from close in Parse.Char(')').Token()
+                select parameters
+            ).Optional()
+            select new Type(type, parameters.GetOrElse(null));
+    }
+
+    private static Parser<string> ParseKeyword(string value)
     {
         return Parse.Identifier(Parse.Letter, Parse.LetterOrDigit).Token().Where((v) => v == value);
     }
 
-    private static bool IsReserved(string value)
+    private static bool IsKeyword(string value)
     {
         return value is
             "print" or
@@ -151,6 +170,7 @@ internal class Parser
             "else" or
             "return" or
             "void" or
-            "i32";
+            "i32" or
+            "string";
     }
 }
