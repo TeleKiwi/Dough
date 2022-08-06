@@ -1,16 +1,15 @@
-﻿def main: void() {
-  let x: i32 = 100
-  let y: i32 = 200
-  let z = x + y
+﻿extern GetStdHandle: i32(stdHandle: i32) from "kernel32.dll"
+extern WriteConsoleW: i32(handle: i32, buffer: string, length: i32, written: i32, reserved: i32) from "kernel32.dll"
 
-  print z
+extern MessageBoxW: i32(handle: i32, text: string, caption: string, type: i32) from "user32.dll"
 
-  let a: string = "omg!"
-  print a
+def print: void(s: string, len: i32) {
+  let handle = GetStdHandle(0 - 11)
+  WriteConsoleW(handle, s, len, 0, 0)
+}
 
-  let b = "hello world"
-  print b
+def main: void() {
+  print("hello world", 11)
 
-  let c: i32 = "hey"
-  print c
+  MessageBoxW(0, "hello world", "this is a title", 0)
 }

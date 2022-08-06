@@ -1,52 +1,52 @@
 ﻿namespace Dough.Typer;
 
-internal class Type : IEquatable<Type>
+internal abstract class Type
 {
-    public object Value { get; }
-    public IEnumerable<(string Identifier, Type Type)>? Parameters { get; }
+    public static Type Unknown()
+    {
+        return new CoreType("unknown");
+    }
+
+    public static Type Void()
+    {
+        return new CoreType("void");
+    }
+
+    public static Type I32()
+    {
+        return new CoreType("i32");
+    }
+
+    public static Type String()
+    {
+        return new CoreType("string");
+    }
+
+    public static Type Function(Type value, (string id, Type type)[] arguments)
+    {
+        return new FunctionType(value, arguments);
+    }
+}
+
+internal class CoreType : Type
+{
+    public string Value { get; set; }
+
+    public CoreType(string value)
+    {
+        Value = value;
+    }
+}
+
+internal class FunctionType : Type
+{
+    public Type Value { get; set; }
     
-    public Type(Type value, IEnumerable<(string, Type)>? parameters)
+    public (string id, Type type)[] Arguments { get; set; }
+
+    public FunctionType(Type value, (string id, Type type)[] arguments)
     {
         Value = value;
-        Parameters = parameters;
-    }
-
-    public Type(string value, IEnumerable<(string, Type)>? parameters)
-    {
-        Value = value;
-        Parameters = parameters;
-    }
-
-    public override bool Equals(object obj)
-    {
-        if (obj is not Type other)
-            return false;
-
-        return Equals(other);
-    }
-
-    public bool Equals(Type? other)
-    {
-        if (other is null)
-            return false;
-
-        if ((Value as string) != (other.Value as string))
-            return false;
-
-        if (Parameters is null && other.Parameters is null)
-            return true;
-
-        return Parameters?.SequenceEqual(other.Parameters!) ?? false;
-    }
-
-    public static bool operator ==(Type a, Type b) => a.Equals(b);
-    public static bool operator !=(Type a, Type b) => !a.Equals(b);
-
-    public static readonly Type Void = new Type("void", null);
-    public static readonly Type I32 = new Type("i32", null);
-    public static readonly Type String = new Type("string", null);
-    public static Type Function(Type type, params (string, Type)[] parameters)
-    {
-        return new Type(type, parameters);
+        Arguments = arguments;
     }
 }

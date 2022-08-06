@@ -6,7 +6,7 @@ namespace Dough.Builder;
 internal class Builder
 {
     private static ModuleBuilder unitBuilder = null;
-    private static Dictionary<string, RoutineBuilder> functions = new Dictionary<string, RoutineBuilder>();
+    private static Dictionary<string, DefinitionBuilder> functions = new Dictionary<string, DefinitionBuilder>();
     private static Dictionary<string, byte> arguments = new Dictionary<string, byte>();
     private static Dictionary<string, Local> variables = new Dictionary<string, Local>();
 
@@ -15,7 +15,7 @@ internal class Builder
     public static Module BuildUnit(Unit unit)
     {
         unitBuilder = new ModuleBuilder();
-        functions = new Dictionary<string, RoutineBuilder>();
+        functions = new Dictionary<string, DefinitionBuilder>();
 
         PrintStringTemp = unitBuilder.AddRoutine("PrintString");
         PrintStringTemp.AddParameter(DataType.Pointer);
@@ -23,7 +23,7 @@ internal class Builder
         Label psStart = psCode.AddLabel();
         psCode.Emit(Instruction.PushArg(0));
         psCode.Emit(Instruction.Load(DataType.U16));
-        psCode.Emit(Instruction.If(ComparisonKind.Zero, DataType.U16));
+        psCode.Emit(Instruction.If(ComparisonKind.NotZero, DataType.U16));
         psCode.Emit(Instruction.Return());
         psCode.Emit(Instruction.PushArg(0));
         psCode.Emit(Instruction.Load(DataType.U16));
@@ -35,12 +35,29 @@ internal class Builder
         psCode.Emit(Instruction.Jump(psStart));
 
         for (int i = 0; i < unit.Functions.Count(); i++)
-            functions[unit.Functions.ElementAt(i).Identifier] = unitBuilder.AddRoutine(unit.Functions.ElementAt(i).Identifier);
-
+            if (unit.Functions.ElementAt(i) is ExternalFunction)
+                functions[unit.Functions.ElementAt(i).Identifier] = unitBuilder.AddExtern(unit.Functions.ElementAt(i).Identifier);
+            else
+                functions[unit.Functions.ElementAt(i).Identifier] = unitBuilder.AddRoutine(unit.Functions.ElementAt(i).Identifier);
+        
         for (int i = 0; i < unit.Functions.Count(); i++)
-            BuildFunction(unitBuilder, unit.Functions.ElementAt(i));
+            if (unit.Functions.ElementAt(i) is ExternalFunction)
+                BuildExternalFunction(unitBuilder, unit.Functions.ElementAt(i) as ExternalFunction);
+            else
+                BuildFunction(unitBuilder, unit.Functions.ElementAt(i));
 
         return unitBuilder.CreateModule();
+    }
+
+    private static void BuildExternalFunction(ModuleBuilder builder, ExternalFunction function)
+    {
+        ExternBuilder externBuilder = functions[function.Identifier] as ExternBuilder;
+        externBuilder.ReturnType = ConvertType(function.Type, true);
+        for (int i = 0; i < function.Type.Arguments?.Count(); i++)
+            externBuilder.AddParameter(ConvertType(function.Type.Arguments.ElementAt(i).type, false));
+
+        externBuilder.Library = function.File;
+        externBuilder.CallingConvention = CallingConvention.StdCall;
     }
 
     private static void BuildFunction(ModuleBuilder builder, Function function)
@@ -48,12 +65,12 @@ internal class Builder
         arguments = new Dictionary<string, byte>();
         variables = new Dictionary<string, Local>();
 
-        RoutineBuilder routineBuilder = functions[function.Identifier];
+        RoutineBuilder routineBuilder = functions[function.Identifier] as RoutineBuilder;
         routineBuilder.ReturnType = ConvertType(function.Type, true);
-        for (int i = 0; i < function.Type.Parameters?.Count(); i++)
+        for (int i = 0; i < function.Type.Arguments?.Count(); i++)
         {
-            arguments[function.Type.Parameters.ElementAt(i).Identifier] = (byte)i;
-            routineBuilder.AddParameter(ConvertType(function.Type.Parameters.ElementAt(i).Type, false));
+            arguments[function.Type.Arguments.ElementAt(i).id] = (byte)i;
+            routineBuilder.AddParameter(ConvertType(function.Type.Arguments.ElementAt(i).type, false));
         }
 
         CodeBuilder codeBuilder = routineBuilder.GetCodeBuilder();
@@ -67,9 +84,9 @@ internal class Builder
     {
         switch (expression)
         {
-            case PrintExpression printExpression:
+            /*case PrintExpression printExpression:
                 BuildPrintExpression(builder, printExpression, pushResult);
-                break;
+                break;*/
             case LetExpression letExpression:
                 BuildLetExpression(builder, letExpression, pushResult);
                 break;
@@ -100,6 +117,7 @@ internal class Builder
         }
     }
 
+    /*
     private static void BuildPrintExpression(CodeBuilder builder, PrintExpression expression, bool pushResult)
     {
         if (expression.Value.Type! == Type.I32)
@@ -110,12 +128,13 @@ internal class Builder
         else if (expression.Value.Type! == Type.String)
         {
             BuildExpression(builder, expression.Value, true);
-            builder.Emit(Instruction.Call(PrintStringTemp));
+            builder.Emit(Instruction.CallDirect(PrintStringTemp));
         }
 
         if (pushResult)
             builder.Emit(Instruction.PushConst(TypedValue.Create<int>(0)));
     }
+    */
 
     private static void BuildLetExpression(CodeBuilder builder, LetExpression expression, bool pushResult)
     {
@@ -212,16 +231,42 @@ internal class Builder
         for (int i = 0; i < expression.Arguments.Count(); i++)
             BuildExpression(builder, expression.Arguments.ElementAt(i), true);
 
-        /*if (arguments.TryGetValue(expression.Identifier, out byte a))
-            builder.Emit(Instruction.Call(a));
+        if (arguments.TryGetValue(expression.Identifier, out byte a))
+        {
+            builder.Emit(Instruction.PushArg(a));
+
+            if (expression.Type! is FunctionType t)
+                builder.Emit(Instruction.CallIndirect(
+                    new CallInfo(
+                        ConvertType(t, false),
+                        expression.Arguments.Select((x) => ConvertType(x.Type!, false)).ToArray(), CallingConvention.Bridge)));
+            else if (expression.Type! is CoreType s)
+                builder.Emit(Instruction.CallIndirect(
+                    new CallInfo(
+                        ConvertType(s, false),
+                        expression.Arguments.Select((x) => ConvertType(x.Type!, false)).ToArray(), CallingConvention.Bridge)));
+        }
         else if (variables.TryGetValue(expression.Identifier, out Local v))
-            builder.Emit(Instruction.Call(v));*/
-        if (functions.TryGetValue(expression.Identifier, out RoutineBuilder f))
-            builder.Emit(Instruction.Call(f));
+        {
+            builder.Emit(Instruction.PushLocal(v));
+
+            if (expression.Type! is CoreType t)
+                builder.Emit(Instruction.CallIndirect(
+                    new CallInfo(
+                        ConvertType(t, false),
+                        expression.Arguments.Select((x) => ConvertType(x.Type!, false)).ToArray(), CallingConvention.Bridge)));
+            else if (expression.Type! is FunctionType s)
+                builder.Emit(Instruction.CallIndirect(
+                    new CallInfo(
+                        ConvertType(s, false),
+                        expression.Arguments.Select((x) => ConvertType(x.Type!, false)).ToArray(), CallingConvention.Bridge)));
+        }
+        else if (functions.TryGetValue(expression.Identifier, out DefinitionBuilder f))
+            builder.Emit(Instruction.CallDirect(f));
         else
             throw new Exception("Unknown function");
 
-        if (!pushResult && f.ReturnType != DataType.Void)
+        if (!pushResult && expression.Type is CoreType c && !(c.Value == "void"))
             builder.Emit(Instruction.Pop(DataType.I32));
     }
 
@@ -251,14 +296,21 @@ internal class Builder
             builder.Emit(Instruction.PushArg(a));
         else if (variables.TryGetValue(expression.Identifier, out Local v))
             builder.Emit(Instruction.PushLocal(v));
+        else if (expression.Type is not FunctionType && functions.TryGetValue(expression.Identifier, out DefinitionBuilder f))
+            builder.Emit(Instruction.PushRoutine(f.ID));
+        else
+            throw new Exception("Unknown variable");
     }
 
-    private static DataType ConvertType(Type type, bool isFunctionDefinition)
-    {
-        if (!isFunctionDefinition && type.Parameters is not null)
-            return DataType.Pointer;
+    //private static DataType ConvertType(CoreType type, bool isFunctionDefinition) => ConvertType(new Type(type, null), isFunctionDefinition);
 
-        return type.Value switch
+    private static DataType ConvertType(Type type, bool isFunctionDefinition) // maybe get rid of this broski
+    {
+        if (type is FunctionType f)
+            return ConvertType(f.Value, isFunctionDefinition);
+
+        CoreType c = (type as CoreType)!;
+        return c.Value switch
         {
             "void" => DataType.Void,
             "i32" => DataType.I32,

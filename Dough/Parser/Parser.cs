@@ -8,10 +8,31 @@ internal class Parser
     public static Unit ParseUnit(string input)
     {
         Parser<Unit> unit =
-            from functions in ParseFunction().Many()
-            select new Unit(functions);
+            from functions in ParseFunction().Or(ParseExtern()).Many()
+            select new Unit(functions.ToArray());
         
         return unit.Parse(input);
+    }
+
+    private static Parser<Function> ParseExtern()
+    {
+        Parser<string> parseString =
+            from open in Parse.Char('\"').Token()
+            from value in Parse.CharExcept('\"').AtLeastOnce()
+            from close in Parse.Char('\"').Token()
+            select string.Concat(value);
+
+        return
+            from @extern in ParseKeyword("extern")
+            from identifier in ParseIdentifier()
+            from type in (
+                from colon in Parse.Char(':').Token()
+                from type in ParseType()
+                select type
+            )
+            from @from in ParseKeyword("from")
+            from file in parseString
+            select new ExternalFunction(identifier, (type as FunctionType)!, file);
     }
     
     private static Parser<Function> ParseFunction()
@@ -31,16 +52,16 @@ internal class Parser
                 select type
             )
             from expressions in parseExpressions
-            select new Function(identifier, type, expressions);
+            select new Function(identifier, (type as FunctionType)!, expressions.ToArray());
     }
 
 
     private static Parser<Expression> ParseExpression()
     {
-        Parser<Expression> parsePrint =
+        /*Parser<Expression> parsePrint =
             from keyword in ParseKeyword("print").Token()
             from value in ParseExpression()
-            select new PrintExpression(value);
+            select new PrintExpression(value);*/
 
         Parser<Expression> parseLet =
             from keyword in ParseKeyword("let").Token()
@@ -52,7 +73,7 @@ internal class Parser
             ).Optional()
             from assignment in Parse.Char('=').Token()
             from value in ParseExpression()
-            select new LetExpression(identifier, type.GetOrElse(null), value);
+            select new LetExpression(identifier, type.GetOrElse(Type.Unknown()), value);
 
         Parser<Expression> parseIfElse =
             from keyword in ParseKeyword("if").Token()
@@ -71,7 +92,7 @@ internal class Parser
         Parser<Expression> parseCall =
             from identifier in Parse.Identifier(Parse.Letter, Parse.LetterOrDigit).Token().Where((i) => !IsKeyword(i))
             from arguments in ParseExpression().DelimitedBy(Parse.Char(',').Token()).Optional().Contained(Parse.Char('(').Token(), Parse.Char(')').Token())
-            select new CallExpression(string.Concat(identifier), arguments.GetOrElse(Enumerable.Empty<Expression>()));
+            select new CallExpression(string.Concat(identifier), arguments.GetOrElse(Enumerable.Empty<Expression>()).ToArray());
 
         Parser<Expression> parseNumber =
             from value in Parse.Digit.AtLeastOnce().Token()
@@ -94,7 +115,7 @@ internal class Parser
             select value;
 
         Parser<Expression> primaryParser =
-            parsePrint.Or(
+            /*parsePrint.Or(*/
             parseLet.Or(
             parseIfElse.Or(
             parseReturn.Or(
@@ -103,7 +124,7 @@ internal class Parser
             parseString.Or(
             parseIdentifier.Or(
             parseParenthesis
-            ))))))));
+            )))))));
 
         Parser<Expression> multiplicativeParser = Parse.ChainOperator(
             Parse.Char('*').Or(Parse.Char('/').Or(Parse.Char('%'))).Token(),
@@ -140,7 +161,10 @@ internal class Parser
     private static Parser<Type> ParseType()
     {
         return
-            from type in ParseKeyword("void").Or(ParseKeyword("i32").Or(ParseKeyword("string")))
+            from type in
+                ParseKeyword("void").Return(Type.Void())
+                .Or(ParseKeyword("i32").Return(Type.I32()))
+                .Or(ParseKeyword("string").Return(Type.String()))
             from parameters in (
                 from open in Parse.Char('(').Token()
                 from parameters in (
@@ -152,7 +176,7 @@ internal class Parser
                 from close in Parse.Char(')').Token()
                 select parameters
             ).Optional()
-            select new Type(type, parameters.GetOrElse(null));
+            select (Type)(parameters.IsEmpty ? (type as CoreType)! : new FunctionType((type as CoreType)!, parameters.GetOrDefault().ToArray()));
     }
 
     private static Parser<string> ParseKeyword(string value)
@@ -163,7 +187,10 @@ internal class Parser
     private static bool IsKeyword(string value)
     {
         return value is
-            "print" or
+            "extern" or
+            "from" or
+            "def" or
+            //"print" or
             "let" or
             "if" or
             "then" or

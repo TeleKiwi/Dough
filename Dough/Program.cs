@@ -4,6 +4,10 @@ using Dough.Parser;
 using Dough.Structure;
 using Dough.Typer;
 
+// ADD UNIT TESTS: maybe ur stuff wont break then
+
+// NOTE FOR TUESDAY: NEATEN PARSER AND BUILDER
+
 // NEATEN THE DAMN BUILDER CLASS PLEASE FOR GODS SAKE (from an athiest)
 
 ///
@@ -33,13 +37,34 @@ using Dough.Typer;
 /// use external apis native to the platform
 /// remember to update the returned value
 /// of print from 0 to the status code
+/// 
+/// TODO: FIX VARIABLE PRECEDENCE IN BUILDER
+/// first check variables, then arguments, then functions
+/// 
+/// TODO: ADD OPTIONAL NAMING OF PARAMETERS
+/// how come when make variable of
+/// function type must have smae
+/// name :(
+/// 
+/// TODO: ALIAS
+/// who am i :O
+/// 
+/// TODO: CALLING CONVENTION OF EXTERNALS
+/// make sure to no longer hardcode
+/// the calling conventions of external
+/// functions in the builder
+/// 
+/// TODO: ADD NEGATIVES
+/// why u feeling so down??
 ///
 
 public class Program
 {
     public static void Main(string[] args)
     {
-        //args = new string[] { "run", "./Tests/main.do" };
+#if DEBUG
+        args = new string[] { "run", "./Tests/main.do" };
+#endif
 
         if (args.Length == 0)
         {
@@ -100,8 +125,12 @@ public class Program
         if (SourceToModule(args) is not Module module)
             return;
 
-        Interpreter interpreter = new Interpreter();
-        interpreter.Run(module);
+        /*Interpreter interpreter = new Interpreter();
+        interpreter.Run(module);*/
+        var omg = Module.Compile(module);
+        //Module.Dump(module, Console.Out);
+        //CILCompiler.DumpModuleIL(Console.Out, module, omg);
+        omg.Invoke(null, null);
     }
 
     private static void Build(string[] args)

@@ -2,26 +2,16 @@
 
 internal abstract class Expression
 {
-    public Type? Type { get; set; }
-}
-
-internal class PrintExpression : Expression
-{
-    public Expression Value { get; set; }
-
-    public PrintExpression(Expression value)
-    {
-        Value = value;
-    }
+    public Type Type { get; set; } = Type.Unknown();
 }
 
 internal class LetExpression : Expression
 {
     public string Identifier { get; set; }
-    public Type? Annotation { get; set; }
+    public Type Annotation { get; set; }
     public Expression Value { get; set; }
 
-    public LetExpression(string identifier, Type? annotation, Expression value)
+    public LetExpression(string identifier, Type annotation, Expression value)
     {
         Identifier = identifier;
         Annotation = annotation;
@@ -82,9 +72,9 @@ internal class BinaryExpression : Expression
 internal class CallExpression : Expression
 {
     public string Identifier { get; set; }
-    public IEnumerable<Expression> Arguments { get; set; }
+    public Expression[] Arguments { get; set; }
     
-    public CallExpression(string identifier, IEnumerable<Expression> arguments)
+    public CallExpression(string identifier, Expression[] arguments)
     {
         Identifier = identifier;
         Arguments = arguments;
