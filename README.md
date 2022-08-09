@@ -1,6 +1,31 @@
 # Dough
+A compiled functional language written in C# with Python & TypeScript-inspired syntax and a built in package manager (Oven).
 
-## Syntax Example
+Still a heavy WIP!
+
+## Running
+### Requirements
+
+- .NET 6.0
+- Visual Studio 2022 (reccomended)
+
+## Instructions
+- Clone the repo
+- Run the below;
+-     dotnet run Dough/Program.cs (flags)
+ 
+## Flags
+help                 - Prints a help message
+
+create (packageName) - creates a new package with Oven
+
+import (packageName) - imports a package
+
+run (fileName)       - runs a file using .NET bytecode
+
+build (fileName)     - builds a file to a bridge file
+
+## Example program
 ```
 def main: void() {
   let x = 10
