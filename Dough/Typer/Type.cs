@@ -1,4 +1,4 @@
-﻿namespace Dough.Typer;
+﻿namespace Dough;
 
 internal abstract class Type
 {

@@ -1,3 +1,3 @@
-﻿namespace Dough.Structure;
+﻿namespace Dough;
 
 internal record Unit(Function[] Functions);

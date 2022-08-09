@@ -13,13 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\BridgeSharpRedninja\Bridge\Bridge.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Tests\main.do">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <ProjectReference Include="..\..\o\Bridge\Bridge.csproj" />
   </ItemGroup>
 
 </Project>
