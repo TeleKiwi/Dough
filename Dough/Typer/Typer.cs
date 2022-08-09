@@ -1,6 +1,4 @@
-﻿using Dough.Structure;
-
-namespace Dough.Typer;
+﻿namespace Dough;
 
 internal class Typer
 {

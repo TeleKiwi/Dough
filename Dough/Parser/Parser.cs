@@ -1,7 +1,6 @@
 ﻿using Sprache;
-using Dough.Structure;
 
-namespace Dough.Parser;
+namespace Dough;
 
 internal class Parser
 {
@@ -58,11 +57,6 @@ internal class Parser
 
     private static Parser<Expression> ParseExpression()
     {
-        /*Parser<Expression> parsePrint =
-            from keyword in ParseKeyword("print").Token()
-            from value in ParseExpression()
-            select new PrintExpression(value);*/
-
         Parser<Expression> parseLet =
             from keyword in ParseKeyword("let").Token()
             from identifier in ParseIdentifier()
@@ -115,7 +109,6 @@ internal class Parser
             select value;
 
         Parser<Expression> primaryParser =
-            /*parsePrint.Or(*/
             parseLet.Or(
             parseIfElse.Or(
             parseReturn.Or(
@@ -190,7 +183,6 @@ internal class Parser
             "extern" or
             "from" or
             "def" or
-            //"print" or
             "let" or
             "if" or
             "then" or

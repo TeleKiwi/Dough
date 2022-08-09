@@ -1,4 +1,4 @@
-﻿namespace Dough.Structure;
+﻿namespace Dough;
 
 internal abstract class Expression
 {

@@ -5,7 +5,7 @@ VisualStudioVersion = 17.2.32602.215
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dough", "Dough\Dough.csproj", "{36A3E20A-1967-4CCF-80FE-2E368CA60FE4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bridge", "..\BridgeSharpRedninja\Bridge\Bridge.csproj", "{FAAE3663-3480-4F41-A88B-766140ECA336}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bridge", "..\o\Bridge\Bridge.csproj", "{893A4B8B-7B94-4B16-AF6E-9DB017D89D55}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{36A3E20A-1967-4CCF-80FE-2E368CA60FE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{36A3E20A-1967-4CCF-80FE-2E368CA60FE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{36A3E20A-1967-4CCF-80FE-2E368CA60FE4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FAAE3663-3480-4F41-A88B-766140ECA336}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FAAE3663-3480-4F41-A88B-766140ECA336}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FAAE3663-3480-4F41-A88B-766140ECA336}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FAAE3663-3480-4F41-A88B-766140ECA336}.Release|Any CPU.Build.0 = Release|Any CPU
+		{893A4B8B-7B94-4B16-AF6E-9DB017D89D55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{893A4B8B-7B94-4B16-AF6E-9DB017D89D55}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{893A4B8B-7B94-4B16-AF6E-9DB017D89D55}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{893A4B8B-7B94-4B16-AF6E-9DB017D89D55}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
