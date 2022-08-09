@@ -1,5 +1,5 @@
 # Dough
-A compiled functional language written in C# with Python & TypeScript-inspired syntax and a built in package manager (Oven).
+A functional language written in C# with Python & TypeScript inspired syntax, and a built in package manager (Oven).
 
 Still a heavy WIP!
 
